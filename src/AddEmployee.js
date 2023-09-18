@@ -1,8 +1,8 @@
 import { useForm, Controller  } from 'react-hook-form';
-import { Input, Button, Upload,Radio,Checkbox,Card ,Select,} from 'antd';
+import { Input, Button, Upload,Radio,Card ,Select} from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import axios from 'axios';
-import React, { useEffect, useState ,ErrorMessage,DatePicker} from 'react';
+import React, { useEffect, useState,} from 'react';
 import { useParams } from 'react-router-dom';
 
 const AddEmployee = () => {
@@ -15,7 +15,25 @@ const AddEmployee = () => {
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [selectedState, setSelectedState] = useState(null);
   const [selectedCity, setSelectedCity] = useState(null); 
-  
+  const [dateOfBirth, setDateOfBirth] = useState(''); 
+  const [validationError, setValidationError] = useState(''); 
+  const handleCountryChange = (value) => { setSelectedCountry(value);setSelectedState(null);setSelectedCity(null);};
+  const handleStateChange = (value) => {  setSelectedState(value);};
+  const handleCityChange = (value) => {setSelectedCity(value);};
+
+  const handleDateChange = (event) => {
+    const selectedDate = event.target.value;
+    setDateOfBirth(selectedDate);
+    const currentDate = new Date();
+    const selectedDateObject = new Date(selectedDate);
+    const ageDifferenceInYears = currentDate.getFullYear() - selectedDateObject.getFullYear();
+    if (ageDifferenceInYears < 18) {
+      setValidationError('You must be at least 18 years old.');
+    } else {
+      setValidationError('');
+    }
+  };
+ 
   useEffect(() => {
     axios.get('https://localhost:7106/api/Employee/GetCountry')
       .then((response) => {
@@ -54,20 +72,6 @@ const AddEmployee = () => {
     }
   }, [selectedState]);
 
-  const handleCountryChange = (value) => {
-    setSelectedCountry(value);
-    setSelectedState(null); 
-    setSelectedCity(null);
-  };
-
-  const handleStateChange = (value) => {
-    setSelectedState(value);
-  };
-
-  const handleCityChange = (value) => {
-    setSelectedCity(value);
-  };
-
   useEffect(() => {
     
     if (id && !isNaN(Number(id))) {
@@ -86,6 +90,7 @@ const AddEmployee = () => {
             .then((fileBlob) => {
               const file = new File([fileBlob], employeeData.imageName);
               setValue('files', [file]);
+              
             })
             .catch((error) => {
               console.log(error);
@@ -97,9 +102,10 @@ const AddEmployee = () => {
         });
     }
   }, [id]);
- 
+
   const onSubmit = async (data) => {
     try {
+     debugger
       const formDataWithFile = new FormData();
       data.maritalStatus = data.maritalStatus ? "1" : "0";
       formDataWithFile.append('firstName', data.firstName);
@@ -113,6 +119,7 @@ const AddEmployee = () => {
       formDataWithFile.append('stateId', selectedState);
       formDataWithFile.append('cityId', selectedCity);
       formDataWithFile.append('gender', data.gender);
+      formDataWithFile.append('birthDate', data.birthDate);
       formDataWithFile.append('maritialStatus', data.maritalStatus);
       formDataWithFile.append('hobbies', data.hobbies);
       if (data.files[0]) {
@@ -147,7 +154,7 @@ const AddEmployee = () => {
       console.error('Error:', error);
     }
   };
-
+  
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
        <Card title="Employee Information"> 
@@ -174,7 +181,6 @@ const AddEmployee = () => {
         render={({ field }) => (
           <Input
             {...field}
-            
             placeholder="Last Name"
             type="text"
           />
@@ -225,7 +231,7 @@ const AddEmployee = () => {
           />
         )}
       />
-   <h4>Zip Code</h4>
+          <h4>Zip Code</h4>
           <Controller
             name="zipCode"
             control={control}
@@ -268,6 +274,16 @@ const AddEmployee = () => {
       </>
       )}
     />
+         <h4>Date of Birth</h4>
+      <input
+        type="date"
+        name="birthDate"
+        placeholder="Select Date of Birth"
+        value={dateOfBirth}
+        onChange={handleDateChange}
+      />
+      {validationError && <p>{validationError}</p>}
+
         <h4>Country</h4>
         <Select name='countryId' onChange={handleCountryChange} value={selectedCountry}>
           {countries.map((country) => (
@@ -356,8 +372,9 @@ const AddEmployee = () => {
         )}
       />
       {errors.files && <p>{errors.files.message}</p>}
+         
+         </Card>
 
- </Card>
       <Button type="primary" htmlType="submit">
         Submit
       </Button>
