@@ -1,12 +1,12 @@
 import { useForm, Controller  } from 'react-hook-form';
-import { Input, Button, Upload,Radio,Checkbox,Card ,Select } from 'antd';
+import { Input, Button, Upload,Radio,Checkbox,Card ,Select,} from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import axios from 'axios';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState ,ErrorMessage,DatePicker} from 'react';
 import { useParams } from 'react-router-dom';
 
 const AddEmployee = () => {
-  const { handleSubmit, control, setValue, formState: { errors }  } = useForm();
+  const { handleSubmit, control, setValue, formState: { errors } ,reset } = useForm();
   const { Option } = Select; 
   const { id } = useParams(); 
   const [countries, setCountries] = useState([]);
@@ -17,7 +17,6 @@ const AddEmployee = () => {
   const [selectedCity, setSelectedCity] = useState(null); 
   
   useEffect(() => {
-   
     axios.get('https://localhost:7106/api/Employee/GetCountry')
       .then((response) => {
         console.log(response)
@@ -58,6 +57,7 @@ const AddEmployee = () => {
   const handleCountryChange = (value) => {
     setSelectedCountry(value);
     setSelectedState(null); 
+    setSelectedCity(null);
   };
 
   const handleStateChange = (value) => {
@@ -70,7 +70,7 @@ const AddEmployee = () => {
 
   useEffect(() => {
     
-    if (id) {
+    if (id && !isNaN(Number(id))) {
      
       axios
         .get(`https://localhost:7106/api/Employee/GetId?id=${id}`)
@@ -79,61 +79,86 @@ const AddEmployee = () => {
             const employeeData = response.data;
             Object.keys(employeeData).forEach((key) => {
               setValue(key, employeeData[key]);
+            setValue('files', [{ name: employeeData.imageName, uid: '-1' }]);
             });
-          }
-        })
+            fetch(`'https://localhost:7106/Images/'=${employeeData.imageName}`)
+            .then((fileResponse) => fileResponse.blob())
+            .then((fileBlob) => {
+              const file = new File([fileBlob], employeeData.imageName);
+              setValue('files', [file]);
+            })
+            .catch((error) => {
+              console.log(error);
+            });
+        }
+      })
         .catch((error) => {
           console.log(error);
         });
     }
   }, [id]);
-
-
-  
+ 
   const onSubmit = async (data) => {
     try {
-      
       const formDataWithFile = new FormData();
-      formDataWithFile.append('id', id);
+      data.maritalStatus = data.maritalStatus ? "1" : "0";
       formDataWithFile.append('firstName', data.firstName);
       formDataWithFile.append('lastName', data.lastName);
       formDataWithFile.append('salary', data.salary);
       formDataWithFile.append('email', data.email);
       formDataWithFile.append('zipcode', data.zipCode);
       formDataWithFile.append('password', data.password);
+      formDataWithFile.append('address', data.address);
       formDataWithFile.append('countryId', selectedCountry);
       formDataWithFile.append('stateId', selectedState);
       formDataWithFile.append('cityId', selectedCity);
       formDataWithFile.append('gender', data.gender);
-      formDataWithFile.append('maritialStatus', data.maritialStatus);
+      formDataWithFile.append('maritialStatus', data.maritalStatus);
       formDataWithFile.append('hobbies', data.hobbies);
-      formDataWithFile.append('files', data.files[0]);
+      if (data.files[0]) {
+        formDataWithFile.append('files', data.files[0]);
+      } else {
+        const previousImageName = data.files[0].name; 
+        formDataWithFile.append('files', previousImageName);
+      }
 
+         if (id && !isNaN(Number(id))) {
+      formDataWithFile.append('id', id);
+    }
 
-      const response = id
-      ? await axios.put(`https://localhost:7106/api/Employee/UpdateEmployee?id=${id}`, formDataWithFile)
-      : await axios.post('https://localhost:7106/api/Employee/AddEmployee', formDataWithFile);
+    const url = id && !isNaN(Number(id))
+      ? `https://localhost:7106/api/Employee/UpdateEmployee?id=${id}`
+      : 'https://localhost:7106/api/Employee/AddEmployee';
 
-    console.log(id ? 'Employee updated:' : 'New employee added:', response.data);
+    const response = (id && !isNaN(Number(id)))
+      ? await axios.put(url, formDataWithFile)
+      : await axios.post(url, formDataWithFile);
+
+      
+      if (response.status === 200)
+       { 
+        reset();
+         setSelectedCountry(null);
+         setSelectedState(null);
+         setSelectedCity(null);
+        console.log(id ? 'Employee updated:' : 'New employee added:', response.data);
+      }
     } catch (error) {
       console.error('Error:', error);
     }
-   
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
        <Card title="Employee Information"> 
-      <h4>FirstName</h4>
+      <h4>First Name</h4>
       <Controller
         name="firstName"
         control={control}
         rules={{ required: 'First Name is required' }}
-       
         render={({ field }) => (
           <Input
             {...field}
-            
             placeholder="First Name"
             type="text"
           />
@@ -141,11 +166,10 @@ const AddEmployee = () => {
       />
       {errors.firstName && <p>{errors.firstName.message}</p>}
 
-      <h4>LastName</h4>
+      <h4>Last Name</h4>
       <Controller
         name="lastName"
         control={control}
-       
         rules={{ required: 'Last Name is required' }}
         render={({ field }) => (
           <Input
@@ -162,7 +186,6 @@ const AddEmployee = () => {
       <Controller
         name="salary"
         control={control}
-        
         rules={{ required: 'Salary is required', validate: (value) => value > 5000 || 'Salary must be greater than 5000', }}
         render={({ field }) => (
           <Input
@@ -179,7 +202,6 @@ const AddEmployee = () => {
       <Controller
         name="email" 
         control={control}
-        
         rules={{ required: 'Email is required', pattern: /^\S+@\S+$/i }} 
         render={({ field }) => (
           <Input
@@ -191,7 +213,18 @@ const AddEmployee = () => {
         )}
       />
    {errors.email && <p>{errors.email.message}</p>}
-
+   <h4>Address</h4>
+      <Controller
+        name="address" 
+        control={control}
+        render={({ field }) => (
+          <Input
+            {...field}
+            placeholder="address" 
+            type="text" 
+          />
+        )}
+      />
    <h4>Zip Code</h4>
           <Controller
             name="zipCode"
@@ -236,7 +269,7 @@ const AddEmployee = () => {
       )}
     />
         <h4>Country</h4>
-        <Select onChange={handleCountryChange} value={selectedCountry}>
+        <Select name='countryId' onChange={handleCountryChange} value={selectedCountry}>
           {countries.map((country) => (
             <Option key={country.id} value={country.id}>
               {country.countryName}
@@ -245,7 +278,7 @@ const AddEmployee = () => {
         </Select>
 
         <h4>State</h4>
-        <Select onChange={handleStateChange} value={selectedState}>
+        <Select name='stateId' onChange={handleStateChange} value={selectedState}>
           {states.map((state) => (
             <Option key={state.id} value={state.id}>
               {state.stateName}
@@ -254,7 +287,7 @@ const AddEmployee = () => {
         </Select>
 
         <h4>City</h4>
-        <Select onChange={handleCityChange} value={selectedCity}>
+        <Select name='cityId' onChange={handleCityChange} value={selectedCity}>
           {cities.map((city) => (
             <Option key={city.id} value={city.id}>
               {city.cityName}
@@ -275,16 +308,15 @@ const AddEmployee = () => {
         )}
       />
 
-       <h4>MaritalStatus</h4>
+       <h4>Marital Status</h4>
         <Controller
         name="maritalStatus"
         control={control}
-        defaultValue={false}
+        defaultValue={false} 
         render={({ field }) => (
           <div>
-            <Checkbox {...field}>
+           <input type="checkbox" {...field} />
               Are you Married
-            </Checkbox>
           </div>
         )}
       />
@@ -297,12 +329,11 @@ const AddEmployee = () => {
             render={({ field }) => (
               <Select
                 {...field}
-                mode="multiple" // Allow multiple selections
                 placeholder="Select Hobbies"
               >
-                <Option value="singing">Singing</Option>
-                <Option value="swimming">Swimming</Option>
-                <Option value="surfing">Surfing</Option>
+                <Option value="singing">singing</Option>
+                <Option value="swimming">swimming</Option>
+                <Option value="surfing">surfing</Option>
               </Select>
             )}
           />
@@ -312,7 +343,6 @@ const AddEmployee = () => {
       <Controller
         name="files"
         control={control}
-        rules={{ required: 'File is required' }}
         render={({ field }) => (
           <Upload
             fileList={field.value}

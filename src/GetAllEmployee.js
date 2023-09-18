@@ -5,7 +5,7 @@ import {useNavigate} from 'react-router-dom';
 
 const GetAllEmployee=()=> {
   const [employeeData, setEmployeeData] = useState([]);
-  const baseUrl = '/Images/';
+  const baseUrl = 'https://localhost:7106/Images/';
   const navigate = useNavigate();
 
   
@@ -13,7 +13,6 @@ const GetAllEmployee=()=> {
       navigate(`/addEmployee/${id}`);
     }
         
-
   useEffect(() => {
     
 
@@ -32,7 +31,6 @@ const GetAllEmployee=()=> {
     axios
       .delete(`https://localhost:7106/api/Employee/DeleteEmployee?id=${id}`)
       .then((response) => {
-        // Update the employeeData state after successful deletion
         setEmployeeData(employeeData.filter((employee) => employee.id !== id));
       })
       .catch((error) => {
@@ -62,6 +60,11 @@ const GetAllEmployee=()=> {
       title: 'Email',
       dataIndex: 'email',
       key: 'email',
+    },
+    {
+      title: 'Address',
+      dataIndex: 'address',
+      key: 'address',
     },
     {
       title: 'Gender',

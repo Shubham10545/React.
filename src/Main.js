@@ -6,7 +6,7 @@ import { Button, Row, Col } from 'antd';
 const Main = () => {
     const navigate = useNavigate();
     const navigateToAddEmployee = () => {
-      navigate('/addEmployee/:id');
+      navigate('/addEmployee');
     };
 
   return (

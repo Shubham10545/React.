@@ -12,6 +12,7 @@ function App() {
         <Routes>
         <Route path="/" element={<Main />} />
           <Route path="/addEmployee/:id" element={<AddEmployee />} />
+          <Route path="/addEmployee" element={<AddEmployee />} />
         </Routes>
       
     </>
