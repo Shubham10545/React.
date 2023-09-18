@@ -37,7 +37,6 @@ const AddEmployee = () => {
   useEffect(() => {
     axios.get('https://localhost:7106/api/Employee/GetCountry')
       .then((response) => {
-        console.log(response)
         setCountries(response.data);
       })
       .catch((error) => {
@@ -50,7 +49,6 @@ const AddEmployee = () => {
     if (selectedCountry) {
       axios.get(`https://localhost:7106/GetState?Id=${selectedCountry}`)
         .then((response) => {
-          console.log(response)
           setStates(response.data);
         })
         .catch((error) => {
@@ -80,11 +78,16 @@ const AddEmployee = () => {
         .get(`https://localhost:7106/api/Employee/GetId?id=${id}`)
         .then((response) => {
           if (response) {
+            console.log(response)
             const employeeData = response.data;
             Object.keys(employeeData).forEach((key) => {
               setValue(key, employeeData[key]);
             setValue('files', [{ name: employeeData.imageName, uid: '-1' }]);
             });
+            setSelectedCountry(employeeData.countryId);
+            setSelectedState(employeeData.stateId);
+            setSelectedCity(employeeData.cityId);
+           
             fetch(`'https://localhost:7106/Images/'=${employeeData.imageName}`)
             .then((fileResponse) => fileResponse.blob())
             .then((fileBlob) => {
@@ -119,19 +122,15 @@ const AddEmployee = () => {
       formDataWithFile.append('stateId', selectedState);
       formDataWithFile.append('cityId', selectedCity);
       formDataWithFile.append('gender', data.gender);
-      formDataWithFile.append('birthDate', data.birthDate);
-      formDataWithFile.append('maritialStatus', data.maritalStatus);
+      formDataWithFile.append('birthDate', dateOfBirth);
+      formDataWithFile.append('maritalStatus',data.maritalStatus);
       formDataWithFile.append('hobbies', data.hobbies);
-      if (data.files[0]) {
+      if (Array.isArray(data.files) && data.files.length > 0) {
         formDataWithFile.append('files', data.files[0]);
-      } else {
-        const previousImageName = data.files[0].name; 
-        formDataWithFile.append('files', previousImageName);
       }
-
          if (id && !isNaN(Number(id))) {
       formDataWithFile.append('id', id);
-    }
+       }
 
     const url = id && !isNaN(Number(id))
       ? `https://localhost:7106/api/Employee/UpdateEmployee?id=${id}`
@@ -281,11 +280,12 @@ const AddEmployee = () => {
         placeholder="Select Date of Birth"
         value={dateOfBirth}
         onChange={handleDateChange}
+        required 
       />
       {validationError && <p>{validationError}</p>}
 
         <h4>Country</h4>
-        <Select name='countryId' onChange={handleCountryChange} value={selectedCountry}style={{ width: 120 }}>
+        <Select name='countryId'onChange={handleCountryChange} value={selectedCountry}style={{ width: 120 }}>
           {countries.map((country) => (
             <Option key={country.id} value={country.id}>
               {country.countryName}

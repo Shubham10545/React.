@@ -17,8 +17,8 @@ const GetAllEmployee=()=> {
     axios
       .get('https://localhost:7106/api/Employee/GetAllEmployee')
       .then((response) => {
-        console.log(response);
         setEmployeeData(response.data);
+        console.log(response)
       })
       .catch((error) => {
         console.log(error);
