@@ -285,7 +285,7 @@ const AddEmployee = () => {
       {validationError && <p>{validationError}</p>}
 
         <h4>Country</h4>
-        <Select name='countryId' onChange={handleCountryChange} value={selectedCountry}>
+        <Select name='countryId' onChange={handleCountryChange} value={selectedCountry}style={{ width: 120 }}>
           {countries.map((country) => (
             <Option key={country.id} value={country.id}>
               {country.countryName}
@@ -294,7 +294,7 @@ const AddEmployee = () => {
         </Select>
 
         <h4>State</h4>
-        <Select name='stateId' onChange={handleStateChange} value={selectedState}>
+        <Select name='stateId' onChange={handleStateChange} value={selectedState}style={{ width: 120 }}>
           {states.map((state) => (
             <Option key={state.id} value={state.id}>
               {state.stateName}
@@ -303,7 +303,8 @@ const AddEmployee = () => {
         </Select>
 
         <h4>City</h4>
-        <Select name='cityId' onChange={handleCityChange} value={selectedCity}>
+        <Select name='cityId' onChange={handleCityChange} value={selectedCity}style={{ width: 120 }}>
+          
           {cities.map((city) => (
             <Option key={city.id} value={city.id}>
               {city.cityName}
@@ -342,6 +343,7 @@ const AddEmployee = () => {
             name="hobbies"
             control={control}
             defaultValue={[]}
+            style={{width: 120,}}
             render={({ field }) => (
               <Select
                 {...field}
