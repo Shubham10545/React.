@@ -4,6 +4,7 @@ import { UploadOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import React, { useEffect, useState,} from 'react';
 import { useParams } from 'react-router-dom';
+import {BASE_URL,imageUrl} from './GetAllEmployee';
 
 const AddEmployee = () => {
   const { handleSubmit, control, setValue, formState: { errors } ,reset } = useForm();
@@ -20,13 +21,25 @@ const AddEmployee = () => {
   const handleCountryChange = (value) => { setSelectedCountry(value);setSelectedState(null);setSelectedCity(null);};
   const handleStateChange = (value) => {  setSelectedState(value);};
   const handleCityChange = (value) => {setSelectedCity(value);};
+  const [profileImageUrl, setProfileImageUrl] = useState('');
 
   const handleDateChange = (event) => {
     const selectedDate = event.target.value;
     setDateOfBirth(selectedDate);
     const currentDate = new Date();
     const selectedDateObject = new Date(selectedDate);
-    const ageDifferenceInYears = currentDate.getFullYear() - selectedDateObject.getFullYear();
+    
+    let  ageDifferenceInYears = currentDate.getFullYear() - selectedDateObject.getFullYear();
+    const birthdateHasOccurred = (
+      currentDate.getMonth() > selectedDateObject.getMonth() ||
+      (currentDate.getMonth() === selectedDateObject.getMonth() &&
+        currentDate.getDate() >= selectedDateObject.getDate())
+    );
+    
+    if (!birthdateHasOccurred) {
+      ageDifferenceInYears--;
+    }
+    
     if (ageDifferenceInYears < 18) {
       setValidationError('You must be at least 18 years old.');
     } else {
@@ -35,7 +48,7 @@ const AddEmployee = () => {
   };
  
   useEffect(() => {
-    axios.get('https://localhost:7106/api/Employee/GetCountry')
+    axios.get(`${BASE_URL}/Employee/GetCountry`)
       .then((response) => {
         setCountries(response.data);
       })
@@ -47,7 +60,7 @@ const AddEmployee = () => {
   useEffect(() => {
    
     if (selectedCountry) {
-      axios.get(`https://localhost:7106/GetState?Id=${selectedCountry}`)
+      axios.get(`${BASE_URL}/State/GetState?Id=${selectedCountry}`)
         .then((response) => {
           setStates(response.data);
         })
@@ -60,7 +73,7 @@ const AddEmployee = () => {
   useEffect(() => {
    
     if (selectedState) {
-      axios.get(`https://localhost:7106/GetCity?Id=${selectedState}`)
+      axios.get(`${BASE_URL}/City/GetCity?Id=${selectedState}`)
         .then((response) => {
           setCities(response.data);
         })
@@ -71,33 +84,24 @@ const AddEmployee = () => {
   }, [selectedState]);
 
   useEffect(() => {
-    
     if (id && !isNaN(Number(id))) {
      
       axios
-        .get(`https://localhost:7106/api/Employee/GetId?id=${id}`)
+        .get(`${BASE_URL}/Employee/GetId?id=${id}`)
         .then((response) => {
           if (response) {
             console.log(response)
             const employeeData = response.data;
             Object.keys(employeeData).forEach((key) => {
               setValue(key, employeeData[key]);
-            setValue('files', [{ name: employeeData.imageName, uid: '-1' }]);
+             setValue('files', [{ name: employeeData.imageName, uid: '-1' }]);
             });
             setSelectedCountry(employeeData.countryId);
             setSelectedState(employeeData.stateId);
             setSelectedCity(employeeData.cityId);
-           
-            fetch(`'https://localhost:7106/Images/'=${employeeData.imageName}`)
-            .then((fileResponse) => fileResponse.blob())
-            .then((fileBlob) => {
-              const file = new File([fileBlob], employeeData.imageName);
-              setValue('files', [file]);
-              
-            })
-            .catch((error) => {
-              console.log(error);
-            });
+            
+          const profileImageUrl = `${imageUrl}${employeeData.imageName}`;
+          setProfileImageUrl( profileImageUrl);
         }
       })
         .catch((error) => {
@@ -108,7 +112,7 @@ const AddEmployee = () => {
 
   const onSubmit = async (data) => {
     try {
-     debugger
+  
       const formDataWithFile = new FormData();
       data.maritalStatus = data.maritalStatus ? "1" : "0";
       formDataWithFile.append('firstName', data.firstName);
@@ -132,9 +136,9 @@ const AddEmployee = () => {
       formDataWithFile.append('id', id);
        }
 
-    const url = id && !isNaN(Number(id))
-      ? `https://localhost:7106/api/Employee/UpdateEmployee?id=${id}`
-      : 'https://localhost:7106/api/Employee/AddEmployee';
+       const url = id && !isNaN(Number(id))
+       ? `${BASE_URL}/Employee/UpdateEmployee?id=${id}`
+       : `${BASE_URL}/Employee/AddEmployee`;
 
     const response = (id && !isNaN(Number(id)))
       ? await axios.put(url, formDataWithFile)
@@ -357,24 +361,34 @@ const AddEmployee = () => {
           />
           {errors.hobbies && <p>{errors.hobbies.message}</p>}
 
-      <h4>File upload:</h4>
-      <Controller
-        name="files"
-        control={control}
-        render={({ field }) => (
-          <Upload
-            fileList={field.value}
-            beforeUpload={(file) => {
-              setValue('files', [file]);
-              return false;
-            }}
-          >
-            <Button icon={<UploadOutlined />}>Upload File</Button>
-          </Upload>
+          <h4>File upload:</h4>
+<Controller
+  name="files"
+  control={control}
+  render={({ field }) => (
+    <>
+      <Upload
+        fileList={field.value}
+        beforeUpload={(file) => {
+          setValue('files', [file]);
+          return false;
+        }}
+      >
+        <Button icon={<UploadOutlined />}>Upload File</Button>
+      </Upload>
+      {field.value?.length > 0 && (
+        <div style={{ width: '100px', height: '100px', overflow: 'hidden' }}>
+          <img
+            src={profileImageUrl} // Display the image directly from the URL
+            alt="Uploaded Preview"
+            style={{ width: '100%', height: '100%' }}
+          />
+            </div>
+          )}
+          </>
         )}
       />
-      {errors.files && <p>{errors.files.message}</p>}
-         
+        {errors.files && <p>{errors.files.message}</p>}         
          </Card>
 
       <Button type="primary" htmlType="submit">

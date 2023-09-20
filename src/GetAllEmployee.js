@@ -3,19 +3,20 @@ import { Table, Button, Popconfirm, Row, Col } from 'antd';
 import axios from 'axios';
 import {useNavigate} from 'react-router-dom';
 
-const GetAllEmployee=()=> {
+const imageUrl = 'https://localhost:7106/Images/';
+const BASE_URL = 'https://localhost:7106/api';
+
+ const GetAllEmployee=()=> {
   const [employeeData, setEmployeeData] = useState([]);
-  const baseUrl = 'https://localhost:7106/Images/';
   const navigate = useNavigate();
 
-  
   const handleUpdate = (id) => { 
       navigate(`/addEmployee/${id}`);
     }
         
   useEffect(() => {
     axios
-      .get('https://localhost:7106/api/Employee/GetAllEmployee')
+      .get(`${BASE_URL}/Employee/GetAllEmployee`)
       .then((response) => {
         setEmployeeData(response.data);
         console.log(response)
@@ -27,7 +28,7 @@ const GetAllEmployee=()=> {
 
   const handleDelete = (id) => {
     axios
-      .delete(`https://localhost:7106/api/Employee/DeleteEmployee?id=${id}`)
+      .delete(`${BASE_URL}/Employee/DeleteEmployee?id=${id}`)
       .then((response) => {
         setEmployeeData(employeeData.filter((employee) => employee.id !== id));
       })
@@ -123,7 +124,11 @@ const GetAllEmployee=()=> {
       dataIndex: 'imageName',
       key: 'imageName',
       render: (imageName) => (
-        <img src={baseUrl + imageName}  style={{ width: '50px', height: '50px' }} />
+        <img
+        src={imageUrl + imageName} 
+        style={{ width: '50px', height: '50px' }}
+        alt="Employee Photo"
+      />
       ),
     }, 
     {
@@ -163,3 +168,4 @@ const GetAllEmployee=()=> {
 }
 
 export default GetAllEmployee;
+export { BASE_URL, imageUrl };
